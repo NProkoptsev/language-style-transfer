@@ -295,7 +295,7 @@ if __name__ == '__main__':
                         feed_dict=parr_feed_dict)
 
                     step += 1
-                    losses.add(loss, loss_g, loss_d, loss_d0, loss_d1)
+                    losses.add(loss, loss_g, loss_d, loss_d0, loss_d1, loss_p)
 
                     if step % args.steps_per_checkpoint == 0:
                         losses.output('step %d, time %.0fs,'
