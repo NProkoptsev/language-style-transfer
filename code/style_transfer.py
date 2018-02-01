@@ -96,6 +96,26 @@ class Model(object):
         loss_g *= tf.reshape(self.weights, [-1])
         self.loss_g = tf.reduce_sum(loss_g) / tf.to_float(self.batch_size)
 
+
+        #####  parallel texts  #####
+        parr_outputs, _ = tf.nn.dynamic_rnn(cell_g, dec_inputs,
+            initial_state=self.h_tsf, scope='generator')
+
+        parr_outputs = tf.nn.dropout(parr_outputs, self.dropout)
+        parr_outputs = tf.reshape(parr_outputs, [-1, dim_h])
+        parr_logits = tf.matmul(parr_outputs, proj_W) + proj_b
+
+        splitted = tf.split(self.targets, 2, 0)
+        parr_targets = tf.concat((splitted[1], splitted[0]), 0)
+
+        splitted_weights = tf.split(self.weighs, 2, 0)
+        parr_weights = tf.concat((splitted_weights[1], splitted_weights[0]), 0)
+
+        loss_p = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=tf.reshape(parr_targets, [-1]), logits=parr_logits)
+        loss_p *= tf.reshape(parr_weights, [-1])
+        self.loss_p = tf.reduce_sum(loss_p) / tf.to_float(self.batch_size)
+
         #####   feed-previous decoding   #####
         go = dec_inputs[:,0,:]
         soft_func = softsample_word(self.dropout, proj_W, proj_b, embedding,
@@ -139,6 +159,10 @@ class Model(object):
             beta1, beta2).minimize(self.loss, var_list=theta_eg)
         self.optimizer_ae = tf.train.AdamOptimizer(self.learning_rate,
             beta1, beta2).minimize(self.loss_g, var_list=theta_eg)
+        
+        self.optimizer_tr = tf.train.AdamOptimizer(self.learning_rate,
+            beta1, beta2).minimize(self.loss_p, var_list=theta_eg)
+
         self.optimizer_d0 = tf.train.AdamOptimizer(self.learning_rate,
             beta1, beta2).minimize(self.loss_d0, var_list=theta_d0)
         self.optimizer_d1 = tf.train.AdamOptimizer(self.learning_rate,
@@ -193,6 +217,12 @@ if __name__ == '__main__':
         print '#sents of training file 0:', len(train0)
         print '#sents of training file 1:', len(train1)
 
+        parr0 = load_sent(args.train + '.2', args.max_train_size)
+        parr1 = load_sent(args.train + '.3', args.max_train_size)
+        print '#sents of parralel file 0:', len(parr0)
+        print '#sents of parralel file 1:', len(parr1)
+
+
         if not os.path.isfile(args.vocab):
             build_vocab(train0 + train1, args.vocab)
 
@@ -219,6 +249,10 @@ if __name__ == '__main__':
 
         if args.train:
             batches, _, _ = get_batches(train0, train1, vocab.word2id,
+                args.batch_size)
+            random.shuffle(batches)
+
+            parr_batches, _, _ = get_batches(parr0, parr1, vocab.word2id,
                 args.batch_size)
             random.shuffle(batches)
 
@@ -255,12 +289,19 @@ if __name__ == '__main__':
                         [model.loss, model.loss_g, model.loss_d, optimizer],
                         feed_dict=feed_dict)
 
+                    parr_feed_dict = feed_dictionary(model, parr_batches[random.randint(0,len(parr_batches))], rho, gamma,
+                        dropout, learning_rate)
+                    loss_p = sess.run(
+                        [model.loss_p, model.optimizer_tr],
+                        feed_dict=parr_feed_dict)
+
                     step += 1
                     losses.add(loss, loss_g, loss_d, loss_d0, loss_d1)
 
                     if step % args.steps_per_checkpoint == 0:
                         losses.output('step %d, time %.0fs,'
                             % (step, time.time() - start_time))
+                        print "Loss_p ", loss_p
                         losses.clear()
 
                 if args.dev:
