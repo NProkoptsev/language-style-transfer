@@ -99,16 +99,16 @@ class Model(object):
 
         #####  parallel texts  #####
         half = self.batch_size / 2
-        parr_dec_inputs = tf.concat((dec_inputs[:half], dec_inputs[half:]),0)
-        parr_outputs, _ = tf.nn.dynamic_rnn(cell_g, dec_inputs,
+        parr_dec_inputs = tf.concat((dec_inputs[half:], dec_inputs[:half]),0)
+        parr_outputs, _ = tf.nn.dynamic_rnn(cell_g, parr_dec_inputs,
             initial_state=self.h_tsf, scope='generator')
 
         parr_outputs = tf.nn.dropout(parr_outputs, self.dropout)
         parr_outputs = tf.reshape(parr_outputs, [-1, dim_h])
         parr_logits = tf.matmul(parr_outputs, proj_W) + proj_b
 
-        parr_targets = tf.concat((self.targets[:half], self.targets[half:]), 0)
-        parr_weights = tf.concat((self.weights[:half], self.weights[half:]), 0)
+        parr_targets = tf.concat((self.targets[half:], self.targets[:half]), 0)
+        parr_weights = tf.concat((self.weights[half:], self.weights[:half]), 0)
 
         loss_p = tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=tf.reshape(parr_targets, [-1]), logits=parr_logits)
