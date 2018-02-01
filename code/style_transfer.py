@@ -98,6 +98,7 @@ class Model(object):
 
 
         #####  parallel texts  #####
+        half = self.batch_size / 2
         parr_outputs, _ = tf.nn.dynamic_rnn(cell_g, dec_inputs,
             initial_state=self.h_tsf, scope='generator')
 
@@ -105,11 +106,8 @@ class Model(object):
         parr_outputs = tf.reshape(parr_outputs, [-1, dim_h])
         parr_logits = tf.matmul(parr_outputs, proj_W) + proj_b
 
-        splitted = tf.split(self.targets, 2, 0)
-        parr_targets = tf.concat((splitted[1], splitted[0]), 0)
-
-        splitted_weights = tf.split(self.weighs, 2, 0)
-        parr_weights = tf.concat((splitted_weights[1], splitted_weights[0]), 0)
+        parr_targets = tf.concat((self.targets[:half], self.targets[half:]), 0)
+        parr_weights = tf.concat((self.weighs[:half], self.weighs[half:]), 0)
 
         loss_p = tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=tf.reshape(parr_targets, [-1]), logits=parr_logits)
@@ -135,7 +133,7 @@ class Model(object):
         #####   discriminator   #####
         # a batch's first half consists of sentences of one style,
         # and second half of the other
-        half = self.batch_size / 2
+        
         zeros, ones = self.labels[:half], self.labels[half:]
         soft_h_tsf = soft_h_tsf[:, :1+self.batch_len, :]
 
