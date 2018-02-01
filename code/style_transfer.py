@@ -250,9 +250,9 @@ if __name__ == '__main__':
                 args.batch_size)
             random.shuffle(batches)
 
-            parr_batches, _, _ = get_batches(parr0, parr1, vocab.word2id,
+            parr_batches = get_parr_batches(parr0, parr1, vocab.word2id,
                 args.batch_size)
-            random.shuffle(batches)
+            random.shuffle(parr_batches)
 
             start_time = time.time()
             step = 0

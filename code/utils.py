@@ -93,3 +93,15 @@ def get_batches(x0, x1, word2id, batch_size, noisy=False):
         s = t
 
     return batches, order0, order1
+
+def get_parr_batches(x0, x1, word2id, batch_size, noisy=False):
+    n = len(x0)
+    batches = []
+    s = 0
+    while s < n:
+        t = min(s + batch_size, n)
+        batches.append(get_batch(x0[s:t] + x1[s:t],
+            [0]*(t-s) + [1]*(t-s), word2id, noisy))
+        s = t
+
+    return batches
