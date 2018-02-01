@@ -5,15 +5,16 @@ class Losses(object):
         self.clear()
 
     def clear(self):
-        self.loss, self.g, self.d, self.d0, self.d1 = 0.0, 0.0, 0.0, 0.0, 0.0
+        self.loss, self.g, self.d, self.d0, self.d1, self.p = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
-    def add(self, loss, g, d, d0, d1):
+    def add(self, loss, g, d, d0, d1, p):
         self.loss += loss / self.div
         self.g += g / self.div
         self.d += d / self.div
         self.d0 += d0 / self.div
         self.d1 += d1 / self.div
+        self.p += p / self.div
 
     def output(self, s):
-        print '%s loss %.2f, g %.2f, d %.2f, adv %.2f, %.2f' \
-            % (s, self.loss, self.g, self.d, self.d0, self.d1)
+        print '%s loss %.2f, g %.2f, d %.2f, adv %.2f, %.2f, p %.2f' \
+            % (s, self.loss, self.g, self.d, self.d0, self.d1, self.p)
