@@ -99,6 +99,7 @@ class Model(object):
 
         #####  parallel texts  #####
         half = self.batch_size / 2
+        parr_dec_inputs = tf.concat((dec_inputs[:half], dec_inputs[half:]),0)
         parr_outputs, _ = tf.nn.dynamic_rnn(cell_g, dec_inputs,
             initial_state=self.h_tsf, scope='generator')
 
@@ -236,7 +237,7 @@ if __name__ == '__main__':
         test1 = load_sent(args.test + '.1')
 
     config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
+    config.gpu_options.allow_growth = False
     with tf.Session(config=config) as sess:
         model = create_model(sess, args, vocab)
 
@@ -287,9 +288,9 @@ if __name__ == '__main__':
                         [model.loss, model.loss_g, model.loss_d, optimizer],
                         feed_dict=feed_dict)
 
-                    parr_feed_dict = feed_dictionary(model, parr_batches[random.randint(0,len(parr_batches))], rho, gamma,
+                    parr_feed_dict = feed_dictionary(model, parr_batches[random.randint(0,len(parr_batches)-1)], rho, gamma,
                         dropout, learning_rate)
-                    loss_p = sess.run(
+                    loss_p, _ = sess.run(
                         [model.loss_p, model.optimizer_tr],
                         feed_dict=parr_feed_dict)
 
