@@ -55,7 +55,7 @@ class Model(object):
         labels = tf.reshape(self.labels, [-1, 1])
 
         embedding = tf.get_variable('embedding',
-            initializer=vocab.embedding.astype(np.float32))
+            initializer=vocab.embedding.astype(np.float32), trainable = False)
         with tf.variable_scope('projection'):
             proj_W = tf.get_variable('W', [dim_h, vocab.size])
             proj_b = tf.get_variable('b', [vocab.size])
@@ -300,8 +300,9 @@ if __name__ == '__main__':
                     if step % args.steps_per_checkpoint == 0:
                         losses.output('step %d, time %.0fs,'
                             % (step, time.time() - start_time))
-                        print "Loss_p ", loss_p
                         losses.clear()
+                    if step % 1000 == 0:
+                        model.saver.save(sess, args.model)
 
                 if args.dev:
                     dev_losses = transfer(model, decoder, sess, args, vocab,

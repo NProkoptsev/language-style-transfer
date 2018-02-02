@@ -27,7 +27,7 @@ class Model(object):
         self.y = tf.placeholder(tf.float32, [None],
             name='y')
 
-        embedding = tf.get_variable('embedding', [vocab.size, dim_emb])
+        embedding = tf.get_variable('embedding', [vocab.size, dim_emb], trainable=False)
         x = tf.nn.embedding_lookup(embedding, self.x)
         self.logits = cnn(x, filter_sizes, n_filters, self.dropout, 'cnn')
         self.probs = tf.sigmoid(self.logits)

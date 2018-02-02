@@ -25,7 +25,7 @@ class Decoder(object):
         self.h = tf.placeholder(tf.float32, [None, dim_h])
 
         tf.get_variable_scope().reuse_variables()
-        embedding = tf.get_variable('embedding', [vocab.size, dim_emb])
+        embedding = tf.get_variable('embedding', [vocab.size, dim_emb], trainable=False)
         with tf.variable_scope('projection'):
             proj_W = tf.get_variable('W', [dim_h, vocab.size])
             proj_b = tf.get_variable('b', [vocab.size])
